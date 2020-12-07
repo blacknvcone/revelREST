@@ -1,6 +1,8 @@
 package app
 
 import (
+	"RevelREST/app/models/mongodb"
+
 	"github.com/revel/revel"
 )
 
@@ -31,6 +33,8 @@ func init() {
 	}
 
 	// Register startup functions with OnAppStart
+
+	revel.OnAppStart(initApp)
 	// revel.DevMode and revel.RunMode only work inside of OnAppStart. See Example Startup Script
 	// ( order dependent )
 	// revel.OnAppStart(ExampleStartupScript)
@@ -48,6 +52,18 @@ var HeaderFilter = func(c *revel.Controller, fc []revel.Filter) {
 	c.Response.Out.Header().Add("Referrer-Policy", "strict-origin-when-cross-origin")
 
 	fc[0](c, fc[1:]) // Execute the next filter stage.
+}
+
+func initApp() {
+
+	// Config, err := revel.LoadConfig("app.conf")
+	// if err != nil || Config == nil {
+	// 	log.Fatalf("%+v", err)
+	// }
+	mongodb.MaxPool = revel.Config.IntDefault("mongo.maxPool", 0)
+	mongodb.PATH, _ = revel.Config.String("mongo.path")
+	mongodb.DBNAME, _ = revel.Config.String("mongo.database")
+	mongodb.CheckAndInitServiceConnection()
 }
 
 //func ExampleStartupScript() {
