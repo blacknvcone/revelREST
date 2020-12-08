@@ -23,6 +23,34 @@ type JwtCtx struct {
 	*revel.Controller
 }
 
+func Auth(c *revel.Controller) revel.Result {
+
+	tokenString := c.Request.Header.Get("Authorization")
+	if tokenString != "" {
+		errResp := buildErrResponse(errors.New("Unauthorized!"), "401")
+		c.Response.Status = 400
+		return c.RenderJSON(errResp)
+	}
+
+	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+		if jwt.GetSigningMethod("HS256") != t.Method {
+			return nil, fmt.Errorf("Unexpected signin method: %v", t.Header["alg"])
+		}
+		return []byte("secret"), nil
+	})
+
+	if token != nil && err == nil {
+		errResp := buildErrResponse(errors.New("Authorized !"), "200")
+		c.Response.Status = 200
+		return c.RenderJSON(errResp)
+	} else {
+		errResp := buildErrResponse(errors.New("Unauthorized!"), "401")
+		c.Response.Status = 400
+		return c.RenderJSON(errResp)
+	}
+
+}
+
 func (c JwtCtx) GetToken() revel.Result {
 
 	var err error
